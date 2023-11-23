@@ -1,130 +1,117 @@
-import { renderChart } from "./graph";
-import {
-  createModel,
-  generateTrainingData,
-  predict,
-  trainModel,
-} from "./models/linearModel";
-import {
-  createPolynomialModel,
-  generateTrainingDataPolynomial,
-  predictPolynomial,
-  trainModelPolynomial,
-} from "./models/polynomialModel";
+import * as tf from "@tensorflow/tfjs";
+import { cleanData } from "./src/preprossecing";
+import { generateChart } from "./src/graphs";
+import { Chart } from "chart.js/auto";
 
 /**
- * Represents a dataset with x and y values.
- * @typedef {Object} DataPoint
- * @property {number} x - The x-coordinate value.
- * @property {number} y - The y-coordinate value.
+ * Mapa de colores para las gráficas.
+ * @type {Map<string, string>}
  */
+const colors = new Map();
 
-/**
- * Represents a collection of data points for a chart.
- * @type {DataPoint[]}
- */
-const data = [
-  { x: 1, y: 5.58250205911961 },
-  { x: 2, y: 8.552583895049647 },
-  { x: 3, y: 24.260197280725137 },
-  { x: 4, y: 45.80152671755726 },
-  { x: 5, y: 13.089272931792618 },
-  { x: 6, y: 20.326784672242756 },
-  { x: 7, y: 26.65615141955836 },
-];
+// Agregar colores al Map
+colors.set("rojo", "rgb(255, 0, 0)");
+colors.set("verde", "rgb(0, 255, 0)");
+colors.set("azul", "rgb(0, 0, 255)");
+colors.set("amarillo", "rgb(255, 255, 0)");
+colors.set("rosa", "rgb(255, 192, 203)");
 
 const main = async () => {
-  // Linear Regression model
-  const model = createModel();
-  const { xs, ys } = generateTrainingData(data);
+  const xRaw = cleanData.map((item) => item.x);
+  const yRaw = cleanData.map((item) => item.y);
 
-  await trainModel(model, xs, ys);
+  // Normalizar los datos
+  const xMin = Math.min(...xRaw);
+  const xMax = Math.max(...xRaw);
+  const yMin = Math.min(...yRaw);
+  const yMax = Math.max(...yRaw);
 
-  const xValues = Array.from(Array(30).keys());
-  const prediction = predict(model, xValues);
+  const normalizedX = xRaw.map((x) => (x - xMin) / (xMax - xMin));
+  const normalizedY = yRaw.map((y) => (y - yMin) / (yMax - yMin));
 
-  // Polynomial Regression model
-  const polynomialModel = createPolynomialModel();
-  const { xs: xsPoly, ys: ysPoly } = generateTrainingDataPolynomial(data);
+  const actualX = tf.tensor2d(xRaw, [xRaw.length, 1]);
+  const actualY = tf.tensor2d(yRaw, [yRaw.length, 1]);
 
-  await trainModelPolynomial(polynomialModel, xsPoly, ysPoly);
+  // Convertir los datos normalizados a tensores
+  const xs = tf.tensor2d(normalizedX, [normalizedX.length, 1]);
+  const ys = tf.tensor2d(normalizedY, [normalizedY.length, 1]);
 
-  const xValuesPoly = Array.from(Array(30).keys());
+  const a = tf.variable(tf.scalar(Math.random()));
+  const b = tf.variable(tf.scalar(Math.random()));
+  const c = tf.variable(tf.scalar(Math.random()));
+  const d = tf.variable(tf.scalar(Math.random()));
+  const e = tf.variable(tf.scalar(Math.random()));
 
-  const predictionPoly = predictPolynomial(polynomialModel, xValuesPoly);
+  const loss = (pred, label) => pred.sub(label).square().mean();
+  const learningRate = 0.01;
+  const optimizer = tf.train.sgd(learningRate);
 
-  // Render the scatter plot
+  const predict = (x) => {
+    return tf.tidy(() => {
+      return a.mul(x.square()).add(b.mul(x)).add(c);
+    });
+  };
 
-  const polynomialDataSet = {
-    datasets: [
+  // Entrenamiento del modelo
+  const numEpochs = 200; // Número de iteraciones de entrenamiento
+  for (let epoch = 0; epoch < numEpochs; epoch++) {
+    optimizer.minimize(() => loss(predict(xs), ys));
+  }
+
+  // Predecir valores
+  const xPredict = tf.tensor2d(
+    Array.from(Array(100).keys()).map((x) => x / 100),
+    [100, 1]
+  );
+
+  const yPredict = predict(xPredict);
+
+  const normalizedData = [];
+  normalizedX.forEach((value, index) => {
+    normalizedData.push({ x: normalizedX[index], y: normalizedY[index] });
+  });
+
+  const predictionData = [];
+  xPredict.dataSync().forEach((value, index) => {
+    predictionData.push({
+      x: xPredict.dataSync()[index],
+      y: yPredict.dataSync()[index],
+    });
+  });
+  const config = generateChart(
+    [
       {
-        label: "Data",
-        data,
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        color: colors.get("rojo"),
+        label: "Datos de entrenamiento",
+        data: normalizedData,
       },
       {
-        label: "Polynomial Regression",
-        data: predictionPoly,
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
+        color: colors.get("azul"),
+        label: "Predicción",
+        data: predictionData,
       },
     ],
-  };
+    -1,
+    1
+  );
 
-  const polynomialConfig = {
-    type: "scatter",
-    data: polynomialDataSet,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-        title: {
-          display: true,
-          text: "Con un polinomio de grado 2",
-        },
-      },
+  const actualConfig = generateChart([
+    {
+      color: colors.get("rojo"),
+      label: "Datos de entrenamiento",
+      data: cleanData,
     },
-  };
-
-  const linearDataSet = {
-    datasets: [
-      {
-        label: "Data",
-        data,
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
-      },
-      {
-        label: "Linear Regression",
-        data: prediction,
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
-      },
-    ],
-  };
-
-  const linearConfig = {
-    type: "scatter",
-    data: linearDataSet,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-        title: {
-          display: true,
-          text: "Con una recta",
-        },
-      },
+    {
+      color: colors.get("azul"),
+      label: "Predicción",
+      data: Array.from(yPredict.dataSync()).map((value, index) => {
+        return { x: xRaw[index], y: value * (yMax - yMin) + yMin };
+      }),
     },
-  };
+  ]);
 
-  renderChart("polynomial-plot", polynomialConfig);
-  renderChart("linear-plot", linearConfig);
+  new Chart(document.getElementById("normalized-plot"), config);
+  new Chart(document.getElementById("actual-plot"), actualConfig);
 };
 
 main();

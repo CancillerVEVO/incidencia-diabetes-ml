@@ -1,0 +1,154 @@
+[
+  {
+    "trimestre": 1,
+    "fecha": 2019,
+    "casosDeObesidad": 9733,
+    "casosDeDiabetes": 447,
+    "afiliados": 3589471,
+    "total": 4653458
+  },
+  {
+    "trimestre": 2,
+    "fecha": 2019,
+    "casosDeObesidad": 10017,
+    "casosDeDiabetes": 839,
+    "afiliados": 3589471,
+    "total": 4653458
+  },
+  {
+    "trimestre": 3,
+    "fecha": 2019,
+    "casosDeObesidad": 9367,
+    "casosDeDiabetes": 1250,
+    "afiliados": 3589471,
+    "total": 4653458
+  },
+  {
+    "trimestre": 4,
+    "fecha": 2019,
+    "casosDeObesidad": 9520,
+    "casosDeDiabetes": 1500,
+    "afiliados": 3589471,
+    "total": 4653458
+  },
+  {
+    "trimestre": 5,
+    "fecha": 2020,
+    "casosDeObesidad": 8293,
+    "casosDeDiabetes": 111,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 6,
+    "fecha": 2020,
+    "casosDeObesidad": 3495,
+    "casosDeDiabetes": 111,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 7,
+    "fecha": 2020,
+    "casosDeObesidad": 3538,
+    "casosDeDiabetes": 139,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 8,
+    "fecha": 2020,
+    "casosDeObesidad": 5193,
+    "casosDeDiabetes": 156,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 9,
+    "fecha": 2021,
+    "casosDeObesidad": 5078,
+    "casosDeDiabetes": 6,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 10,
+    "fecha": 2021,
+    "casosDeObesidad": 5968,
+    "casosDeDiabetes": 17,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 11,
+    "fecha": 2021,
+    "casosDeObesidad": 5225,
+    "casosDeDiabetes": 126,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 12,
+    "fecha": 2021,
+    "casosDeObesidad": 5083,
+    "casosDeDiabetes": 238,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 13,
+    "fecha": 2022,
+    "casosDeObesidad": 10927,
+    "casosDeDiabetes": 61,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 14,
+    "fecha": 2022,
+    "casosDeObesidad": 13797,
+    "casosDeDiabetes": 118,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 15,
+    "fecha": 2022,
+    "casosDeObesidad": 11253,
+    "casosDeDiabetes": 273,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 16,
+    "fecha": 2022,
+    "casosDeObesidad": 9301,
+    "casosDeDiabetes": 426,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 17,
+    "fecha": 2023,
+    "casosDeObesidad": 9779,
+    "casosDeDiabetes": 128,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 18,
+    "fecha": 2023,
+    "casosDeObesidad": 10282,
+    "casosDeDiabetes": 209,
+    "afiliados": 4681465,
+    "total": 5784442
+  },
+  {
+    "trimestre": 19,
+    "fecha": 2023,
+    "casosDeObesidad": 12680,
+    "casosDeDiabetes": 338,
+    "afiliados": 4681465,
+    "total": 5784442
+  }
+]

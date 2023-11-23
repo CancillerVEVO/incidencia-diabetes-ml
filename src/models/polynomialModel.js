@@ -17,13 +17,17 @@ import * as tf from "@tensorflow/tfjs";
  * @returns {tf.Sequential} - The polynomial regression model.
  */
 const createPolynomialModel = () => {
-  const model = tf.sequential();
-  model.add(
-    tf.layers.dense({ units: 1, inputShape: [1], activation: "linear" })
+  const model = tf.sequential(
+    {
+      layers: [
+        tf.layers.dense({ units: 10, inputShape: [1], activation: "sigmoid" }),
+      ],
+    },
+    { name: "polynomialRegression" }
   );
-  model.add(tf.layers.dense({ units: 10, activation: "sigmoid" })); // Experiment with the number of units
-  model.add(tf.layers.dense({ units: 1, activation: "linear" }));
-  model.compile({ loss: "meanSquaredError", optimizer: "sgd" });
+
+  model.compile({ loss: "meanSquaredError", optimizer: tf.train.sgd(0.1) });
+
   return model;
 };
 
@@ -51,7 +55,7 @@ const generateTrainingDataPolynomial = (data) => {
  * @param {tf.Tensor2D} ys - The output tensor.
  */
 const trainModelPolynomial = async (model, xs, ys) => {
-  await model.fit(xs, ys, { epochs: 250 });
+  await model.fit(xs, ys, { epochs: 100 });
 };
 
 /**
