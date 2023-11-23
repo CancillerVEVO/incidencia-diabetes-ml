@@ -1,117 +1,133 @@
-import * as tf from "@tensorflow/tfjs";
-import { cleanData } from "./src/preprossecing";
-import { generateChart } from "./src/graphs";
 import { Chart } from "chart.js/auto";
+import regression from "regression";
+import csv from "csvtojson";
+import { processJson } from "./src/preprossecing";
+import { generateChart } from "./src/graphs";
+const fileInput = document.getElementById("file-input");
+const fileButton = document.getElementById("file-button");
+const plotContainer = document.getElementById("plot-container");
+const predictionContainer = document.getElementById("prediction-container");
 
-/**
- * Mapa de colores para las gráficas.
- * @type {Map<string, string>}
- */
-const colors = new Map();
+fileButton.addEventListener("click", (event) => {
+  event.preventDefault();
 
-// Agregar colores al Map
-colors.set("rojo", "rgb(255, 0, 0)");
-colors.set("verde", "rgb(0, 255, 0)");
-colors.set("azul", "rgb(0, 0, 255)");
-colors.set("amarillo", "rgb(255, 255, 0)");
-colors.set("rosa", "rgb(255, 192, 203)");
-
-const main = async () => {
-  const xRaw = cleanData.map((item) => item.x);
-  const yRaw = cleanData.map((item) => item.y);
-
-  // Normalizar los datos
-  const xMin = Math.min(...xRaw);
-  const xMax = Math.max(...xRaw);
-  const yMin = Math.min(...yRaw);
-  const yMax = Math.max(...yRaw);
-
-  const normalizedX = xRaw.map((x) => (x - xMin) / (xMax - xMin));
-  const normalizedY = yRaw.map((y) => (y - yMin) / (yMax - yMin));
-
-  const actualX = tf.tensor2d(xRaw, [xRaw.length, 1]);
-  const actualY = tf.tensor2d(yRaw, [yRaw.length, 1]);
-
-  // Convertir los datos normalizados a tensores
-  const xs = tf.tensor2d(normalizedX, [normalizedX.length, 1]);
-  const ys = tf.tensor2d(normalizedY, [normalizedY.length, 1]);
-
-  const a = tf.variable(tf.scalar(Math.random()));
-  const b = tf.variable(tf.scalar(Math.random()));
-  const c = tf.variable(tf.scalar(Math.random()));
-  const d = tf.variable(tf.scalar(Math.random()));
-  const e = tf.variable(tf.scalar(Math.random()));
-
-  const loss = (pred, label) => pred.sub(label).square().mean();
-  const learningRate = 0.01;
-  const optimizer = tf.train.sgd(learningRate);
-
-  const predict = (x) => {
-    return tf.tidy(() => {
-      return a.mul(x.square()).add(b.mul(x)).add(c);
-    });
-  };
-
-  // Entrenamiento del modelo
-  const numEpochs = 200; // Número de iteraciones de entrenamiento
-  for (let epoch = 0; epoch < numEpochs; epoch++) {
-    optimizer.minimize(() => loss(predict(xs), ys));
+  // Aqui se lee el archivo
+  if (fileInput.files.length === 0) {
+    return;
   }
 
-  // Predecir valores
-  const xPredict = tf.tensor2d(
-    Array.from(Array(100).keys()).map((x) => x / 100),
-    [100, 1]
-  );
+  const file = fileInput.files[0];
 
-  const yPredict = predict(xPredict);
+  const reader = new FileReader();
 
-  const normalizedData = [];
-  normalizedX.forEach((value, index) => {
-    normalizedData.push({ x: normalizedX[index], y: normalizedY[index] });
-  });
+  reader.readAsText(file);
 
-  const predictionData = [];
-  xPredict.dataSync().forEach((value, index) => {
-    predictionData.push({
-      x: xPredict.dataSync()[index],
-      y: yPredict.dataSync()[index],
-    });
-  });
-  const config = generateChart(
-    [
+  reader.onload = async function (e) {
+    const csvString = e.target.result;
+
+    const json = await csv({
+      colParser: {
+        trimestre: "number",
+        año: "number",
+        casosDeObesidad: "number",
+        casosDeDiabetes: "number",
+        afiliados: "number",
+        total: "number",
+      },
+    }).fromString(csvString);
+
+    console.log(json);
+
+    const datosPreparadosParaGraficar = processJson(json);
+
+    console.log(datosPreparadosParaGraficar);
+
+    const graficaOriginal = generateChart(
+      [
+        {
+          label: "Incidencia de diabetes",
+          data: datosPreparadosParaGraficar,
+          color: "rgba(255, 99, 132, 1)",
+        },
+      ],
+      -1000,
+      3000
+    );
+
+    if (plotContainer.hasChildNodes()) {
+      plotContainer.removeChild(plotContainer.firstChild);
+      const canvas = document.createElement("canvas");
+      canvas.id = "actual-plot";
+      plotContainer.appendChild(canvas);
+    }
+
+    new Chart(document.getElementById("actual-plot"), graficaOriginal);
+
+    const datosPreparadosParaRegresion = datosPreparadosParaGraficar.map(
+      (item) => [item.x, item.y]
+    );
+
+    // Despues de obtener los datos se tiene que procesar para meter en la funcion de regresion
+    const resultadoRegresion = regression.polynomial(
+      datosPreparadosParaRegresion,
       {
-        color: colors.get("rojo"),
-        label: "Datos de entrenamiento",
-        data: normalizedData,
+        order: 4,
+        precision: 5,
+      }
+    );
+
+    console.log(resultadoRegresion);
+
+    const a = resultadoRegresion.equation[0];
+    const b = resultadoRegresion.equation[1];
+    const c = resultadoRegresion.equation[2];
+    const d = resultadoRegresion.equation[3];
+    const f = resultadoRegresion.equation[4];
+
+    const predict = (x) => {
+      return a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e;
+    };
+
+    console.log(
+      `La incidencia del siguiente trimestre es: ${predict(
+        datosPreparadosParaGraficar.length + 1
+      )}`
+    );
+
+    // Formateas los datos para graficar
+    const datosDelAlgoritmoFormateadosParaGraficar =
+      resultadoRegresion.points.map((item) => {
+        return { x: item[0], y: item[1] };
+      });
+
+    const predictChart = generateChart([
+      {
+        label: "Prediccion de diabetes",
+        data: datosDelAlgoritmoFormateadosParaGraficar,
+        color: "rgba(54, 162, 235, 1)",
       },
       {
-        color: colors.get("azul"),
-        label: "Predicción",
-        data: predictionData,
+        label: "Incidencia de diabetes",
+        data: datosPreparadosParaGraficar,
+        color: "rgba(255, 99, 132, 1)",
       },
-    ],
-    -1,
-    1
-  );
+    ]);
 
-  const actualConfig = generateChart([
-    {
-      color: colors.get("rojo"),
-      label: "Datos de entrenamiento",
-      data: cleanData,
-    },
-    {
-      color: colors.get("azul"),
-      label: "Predicción",
-      data: Array.from(yPredict.dataSync()).map((value, index) => {
-        return { x: xRaw[index], y: value * (yMax - yMin) + yMin };
-      }),
-    },
-  ]);
+    if (predictionContainer.hasChildNodes()) {
+      predictionContainer.removeChild(predictionContainer.firstChild);
+      const canvas = document.createElement("canvas");
+      canvas.id = "prediction-plot";
+      predictionContainer.appendChild(canvas);
+    }
 
-  new Chart(document.getElementById("normalized-plot"), config);
-  new Chart(document.getElementById("actual-plot"), actualConfig);
-};
+    new Chart(document.getElementById("prediction-plot"), predictChart);
 
-main();
+    console.log(
+      `La incidencia del siguiente trimestre es ${predict(
+        datosPreparadosParaGraficar.length + 1
+      )}`
+    );
+
+    console.log(`La funcion de regresion es: ${resultadoRegresion.string}`);
+  };
+});

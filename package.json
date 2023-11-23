@@ -12,9 +12,8 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.13.0",
     "chart.js": "^4.4.0",
-    "luxon": "^3.4.4",
+    "csvtojson": "^2.0.10",
     "regression": "^2.0.1"
   }
 }

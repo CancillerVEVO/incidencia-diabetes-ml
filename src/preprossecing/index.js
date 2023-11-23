@@ -1,3 +1,3 @@
-import cleanData from "./preprocessing";
+import { processJson } from "./preprocessing";
 
-export { cleanData };
+export { processJson };
