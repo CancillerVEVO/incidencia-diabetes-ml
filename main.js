@@ -8,6 +8,8 @@ const fileButton = document.getElementById("file-button");
 const plotContainer = document.getElementById("plot-container");
 const predictionContainer = document.getElementById("prediction-container");
 
+let cache = null;
+
 fileButton.addEventListener("click", (event) => {
   event.preventDefault();
 
@@ -63,11 +65,12 @@ fileButton.addEventListener("click", (event) => {
 
     new Chart(document.getElementById("actual-plot"), graficaOriginal);
 
+    // Tienes que preparar los datos para meterlos en la funcion de regresion
     const datosPreparadosParaRegresion = datosPreparadosParaGraficar.map(
       (item) => [item.x, item.y]
     );
 
-    // Despues de obtener los datos se tiene que procesar para meter en la funcion de regresion
+    // Se llama la funcion de regresion
     const resultadoRegresion = regression.polynomial(
       datosPreparadosParaRegresion,
       {
@@ -76,16 +79,20 @@ fileButton.addEventListener("click", (event) => {
       }
     );
 
-    console.log(resultadoRegresion);
+    console.log(`Resultado: `, resultadoRegresion);
 
-    const a = resultadoRegresion.equation[0];
-    const b = resultadoRegresion.equation[1];
-    const c = resultadoRegresion.equation[2];
-    const d = resultadoRegresion.equation[3];
-    const f = resultadoRegresion.equation[4];
+    const modelo = resultadoRegresion;
+
+    console.log(`El modelo es: `, modelo);
+
+    const a = modelo.equation[0];
+    const b = modelo.equation[1];
+    const c = modelo.equation[2];
+    const d = modelo.equation[3];
+    const f = modelo.equation[4];
 
     const predict = (x) => {
-      return a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e;
+      return a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + f;
     };
 
     console.log(
@@ -95,10 +102,26 @@ fileButton.addEventListener("click", (event) => {
     );
 
     // Formateas los datos para graficar
-    const datosDelAlgoritmoFormateadosParaGraficar =
-      resultadoRegresion.points.map((item) => {
+    const datosDelAlgoritmoFormateadosParaGraficar = modelo.points.map(
+      (item) => {
         return { x: item[0], y: item[1] };
-      });
+      }
+    );
+
+    const prediccion200 = Array.from(
+      { length: datosPreparadosParaGraficar.length + 2 },
+      (_, i) => {
+        return { x: i + 1, y: predict(i + 1) };
+      }
+    );
+
+    const mse = datosPreparadosParaRegresion.reduce((acc, item) => {
+      return acc + (item[1] - predict(item[0])) ** 2;
+    }, 0);
+
+    const rmse = Math.sqrt(mse / datosPreparadosParaRegresion.length);
+
+    console.log(`La raiz del error cuadratico medio es: ${rmse}`);
 
     const predictChart = generateChart([
       {
@@ -111,6 +134,11 @@ fileButton.addEventListener("click", (event) => {
         data: datosPreparadosParaGraficar,
         color: "rgba(255, 99, 132, 1)",
       },
+      {
+        label: "Prediccion de diabetes 200 trimestres",
+        data: prediccion200,
+        color: "rgba(75, 192, 192, 1)",
+      },
     ]);
 
     if (predictionContainer.hasChildNodes()) {
@@ -122,12 +150,8 @@ fileButton.addEventListener("click", (event) => {
 
     new Chart(document.getElementById("prediction-plot"), predictChart);
 
-    console.log(
-      `La incidencia del siguiente trimestre es ${predict(
-        datosPreparadosParaGraficar.length + 1
-      )}`
-    );
+    console.log(`La incidencia del siguiente trimestre es ${predict(36)}`);
 
-    console.log(`La funcion de regresion es: ${resultadoRegresion.string}`);
+    console.log(`La funcion de regresion es: ${modelo.string}`);
   };
 });
